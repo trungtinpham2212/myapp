@@ -76,6 +76,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseDeveloperExceptionPage();
 // Always enable Swagger for testing on deployed server
 app.UseSwagger();
 app.UseSwaggerUI();
