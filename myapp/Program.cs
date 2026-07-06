@@ -17,7 +17,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowViteApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173","https://page-product-nine.vercel.app/")
+        policy.WithOrigins("http://localhost:5173","https://page-product-nine.vercel.app")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
