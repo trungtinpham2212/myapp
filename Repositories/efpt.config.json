@@ -39,6 +39,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.payments",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.product_images",
          "ObjectType": 0
       },

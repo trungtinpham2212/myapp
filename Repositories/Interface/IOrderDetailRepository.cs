@@ -1,6 +1,6 @@
 using Repositories.Models;
 
-namespace Repositories.Interfaces;
+namespace Repositories.Interface;
 
 public interface IOrderDetailRepository : IGenericRepository<OrderDetail>
 {

@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Repositories.Models;
 
-namespace Repositories.Interfaces;
+namespace Repositories.Interface;
 
 public interface ICartRepository : IGenericRepository<Cart>
 {

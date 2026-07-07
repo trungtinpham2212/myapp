@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Repositories.DBContext;
-using Repositories.Interfaces;
+using Repositories.Interface;
 namespace STOMS.Repository.Repositories.Interfaces;
 
 public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEntity : class

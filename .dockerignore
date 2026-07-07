@@ -1,22 +1,7 @@
-**/.classpath
-**/.dockerignore
-**/.env
-**/.git
-**/.gitignore
-**/.project
-**/.settings
-**/.toolstarget
-**/.vs
-**/.vscode
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/bin
-**/bld
-**/core
-**/docker-compose*
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
-**/testresults
+**/.classpath **/.dockerignore **/.env **/.git **/.gitignore **/.project **/.settings **/.toolstarget **/.vs **/.vscode **
+/*.*proj.user
+**/
+*.dbmdl **
+/*.jfm
+**/
+bin **/bld **/core **/docker-compose* **/Dockerfile* **/node_modules **/npm-debug.log **/obj **/testresults

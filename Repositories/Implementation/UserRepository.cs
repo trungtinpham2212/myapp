@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Repositories.DBContext;
-using Repositories.Interfaces;
+using Repositories.Interface;
 using Repositories.Models;
 
 namespace Repositories.Implementation;

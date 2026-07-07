@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using Repositories.DBContext;
 using Repositories.Implementation;
-using Repositories.Interfaces;
+using Repositories.Interface;
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
@@ -25,6 +25,7 @@ public class UnitOfWork : IUnitOfWork
     private IReviewRepository _reviewRepository;
     private IUserRepository _userRepository;
     private IWishlistRepository _wishlistRepository;
+    private IPaymentRepository _paymentRepository;
 
     public UnitOfWork(myappContext dbContext)
     {
@@ -58,6 +59,7 @@ public class UnitOfWork : IUnitOfWork
     public IReviewRepository ReviewRepository => _reviewRepository ??= new ReviewRepository(_dbContext);
     public IUserRepository UserRepository => _userRepository ??= new UserRepository(_dbContext);
     public IWishlistRepository WishlistRepository => _wishlistRepository ??= new WishlistRepository(_dbContext);
+    public IPaymentRepository PaymentRepository => _paymentRepository ??= new PaymentRepository(_dbContext);
 
     public Task<IDbContextTransaction> BeginTransactionAsync()
     {

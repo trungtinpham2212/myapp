@@ -62,12 +62,14 @@ public class OrderService : IOrderService
             decimal shippingFee = cart.ShippingFee ?? 0;
             decimal finalAmount = provisionalAmount + shippingFee;
 
+            bool isCod = (request.PaymentMethod ?? "COD") == "COD";
+
             var order = new Order
             {
                 UserId = userId,
-                OrderStatus = "Chờ xử lý",
+                OrderStatus = isCod ? "Success" : "Processing",
                 PaymentMethod = request.PaymentMethod ?? "COD",
-                PaymentStatus = "Chưa thanh toán",
+                PaymentStatus = isCod ? "Success" : "Pending",
                 ProvisionalAmount = provisionalAmount,
                 ShippingFee = shippingFee,
                 FinalAmount = finalAmount,
@@ -79,6 +81,37 @@ public class OrderService : IOrderService
 
             await _unitOfWork.OrderRepository.AddAsync(order);
             await _unitOfWork.SaveChangesAsync();
+
+            string? qrCodeUrl = null;
+            if (order.PaymentMethod == "BankTransfer")
+            {
+                qrCodeUrl = $"https://vietqr.app/img?bank=MBBank&acc=55501012004&template=compact&showinfo=true&holder=PHAM TRUNG TIN&store=Myapp&amount={(long)finalAmount}&des=DH{order.OrderId}";
+                
+                var payment = new Payment
+                {
+                    OrderId = order.OrderId,
+                    PaymentMethod = "BankTransfer",
+                    Amount = finalAmount,
+                    PaymentStatus = "Pending",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                await _unitOfWork.PaymentRepository.AddAsync(payment);
+            }
+            else
+            {
+                var payment = new Payment
+                {
+                    OrderId = order.OrderId,
+                    PaymentMethod = order.PaymentMethod ?? "COD",
+                    Amount = finalAmount,
+                    PaymentStatus = "Success",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                
+                await _unitOfWork.PaymentRepository.AddAsync(payment);
+            }
 
             foreach (var ci in cartItems)
             {
@@ -121,7 +154,8 @@ public class OrderService : IOrderService
                     OrderStatus = order.OrderStatus,
                     PaymentStatus = order.PaymentStatus,
                     FinalAmount = order.FinalAmount,
-                    CreatedAt = order.CreatedAt
+                    CreatedAt = order.CreatedAt,
+                    QrCodeUrl = qrCodeUrl
                 }
             };
         }

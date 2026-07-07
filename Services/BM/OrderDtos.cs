@@ -32,6 +32,10 @@ public class CreateOrderResponseDto
 
     [JsonPropertyName("created_at")]
     public DateTime? CreatedAt { get; set; }
+
+    [JsonPropertyName("qr_code_url")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? QrCodeUrl { get; set; }
 }
 
 public class OrderDto

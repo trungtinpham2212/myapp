@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using Repositories.DBContext;
-using Repositories.Interfaces;
+using Repositories.Interface;
 using System;
 using System.Threading.Tasks;
 
@@ -24,6 +24,7 @@ public interface IUnitOfWork : IDisposable
     IReviewRepository ReviewRepository { get; }
     IUserRepository UserRepository { get; }
     IWishlistRepository WishlistRepository { get; }
+    IPaymentRepository PaymentRepository { get; }
 
     Task<IDbContextTransaction> BeginTransactionAsync();
 

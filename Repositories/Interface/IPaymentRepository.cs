@@ -2,6 +2,6 @@ using Repositories.Models;
 
 namespace Repositories.Interface;
 
-public interface IBrandRepository : IGenericRepository<Brand>
+public interface IPaymentRepository : IGenericRepository<Payment>
 {
 }
