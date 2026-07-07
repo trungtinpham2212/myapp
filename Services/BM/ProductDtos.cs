@@ -86,3 +86,45 @@ public class ImageDto
     [JsonPropertyName("sort_order")]
     public int? SortOrder { get; set; }
 }
+
+public class TopSellingVariantDto
+{
+    [JsonPropertyName("product_variant_id")]
+    public long ProductVariantId { get; set; }
+
+    [JsonPropertyName("color")]
+    public string Color { get; set; } = string.Empty;
+
+    [JsonPropertyName("storage")]
+    public string Storage { get; set; } = string.Empty;
+
+    [JsonPropertyName("stock_quantity")]
+    public int? StockQuantity { get; set; }
+
+    [JsonPropertyName("total_sold")]
+    public int TotalSold { get; set; }
+
+    [JsonPropertyName("price")]
+    public decimal Price { get; set; }
+}
+
+public class TopSellingProductDto
+{
+    [JsonPropertyName("product_id")]
+    public long ProductId { get; set; }
+
+    [JsonPropertyName("product_name")]
+    public string? ProductName { get; set; }
+
+    [JsonPropertyName("category_name")]
+    public string? CategoryName { get; set; }
+
+    [JsonPropertyName("total_sold")]
+    public int TotalSold { get; set; }
+
+    [JsonPropertyName("total_revenue")]
+    public decimal TotalRevenue { get; set; }
+
+    [JsonPropertyName("variants")]
+    public List<TopSellingVariantDto> Variants { get; set; } = new();
+}

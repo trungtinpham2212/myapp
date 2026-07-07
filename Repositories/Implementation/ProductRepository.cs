@@ -64,4 +64,30 @@ public class ProductRepository : GenericRepository<Product>, IProductRepository
             .Include(p => p.ProductImages)
             .FirstOrDefaultAsync(p => p.ProductId == productId);
     }
+
+    public async Task<List<(long ProductId, long VariantId, int TotalSold, decimal TotalRevenue)>> GetTopSellingVariantStatsAsync()
+    {
+        var stats = await _dbContext.OrderDetails
+            .Where(od => od.Order.PaymentStatus == "Success")
+            .GroupBy(od => new { od.ProductVariantId, od.ProductVariant.ProductId })
+            .Select(g => new
+            {
+                ProductId = g.Key.ProductId,
+                VariantId = g.Key.ProductVariantId,
+                TotalSold = g.Sum(x => x.Quantity),
+                TotalRevenue = g.Sum(x => x.Quantity * x.PriceAtPurchase)
+            })
+            .ToListAsync();
+
+        return stats.Select(s => (s.ProductId, s.VariantId, s.TotalSold, s.TotalRevenue)).ToList();
+    }
+
+    public async Task<List<Product>> GetProductsByIdsAsync(List<long> productIds)
+    {
+        return await _dbContext.Products
+            .Include(p => p.Category)
+            .Include(p => p.ProductVariants)
+            .Where(p => productIds.Contains(p.ProductId))
+            .ToListAsync();
+    }
 }

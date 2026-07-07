@@ -41,6 +41,7 @@ public class ProductsController : ControllerBase
         return Ok(response);
     }
 
+
     [HttpGet("{product_id}")]
     public async Task<IActionResult> GetQuickView([FromRoute(Name = "product_id")] long productId)
     {

@@ -42,15 +42,25 @@ public class WebhooksController : ControllerBase
             return BadRequest(new { success = false, message = "Invalid payload" });
         }
 
-        // Tìm nội dung chuyển khoản chứa cú pháp DH{OrderId} (Ví dụ: DH1005)
-        var match = Regex.Match(payload.Content, @"DH(\d+)", RegexOptions.IgnoreCase);
-        if (!match.Success)
+        // Lấy mã đơn hàng từ Code của Sepay (ưu tiên) hoặc dùng Regex bóc từ Content
+        string orderCode = payload.Code;
+        if (string.IsNullOrEmpty(orderCode) && !string.IsNullOrEmpty(payload.Content))
+        {
+            var match = Regex.Match(payload.Content, @"DH(\d+)", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                orderCode = match.Value; // DH123
+            }
+        }
+
+        if (string.IsNullOrEmpty(orderCode) || !orderCode.StartsWith("DH", StringComparison.OrdinalIgnoreCase))
         {
             // Trả về 200 OK để Sepay không gọi lại webhook nữa nếu giao dịch này không thuộc về hệ thống mình
             return Ok(new { success = true, message = "Not an order payment, ignoring" });
         }
 
-        if (!long.TryParse(match.Groups[1].Value, out long orderId))
+        string orderIdStr = orderCode.Substring(2); // Cắt chữ DH đi để lấy số
+        if (!long.TryParse(orderIdStr, out long orderId))
         {
             return Ok(new { success = true, message = "Invalid order ID format" });
         }
