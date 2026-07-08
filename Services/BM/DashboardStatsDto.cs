@@ -22,3 +22,18 @@ public class RevenueByDayDto
     [JsonPropertyName("revenue")]
     public decimal Revenue { get; set; }
 }
+
+public class RevenueByCategoryDto
+{
+    [JsonPropertyName("category_id")]
+    public int CategoryId { get; set; }
+
+    [JsonPropertyName("category_name")]
+    public string CategoryName { get; set; } = string.Empty;
+
+    [JsonPropertyName("revenue")]
+    public decimal Revenue { get; set; }
+
+    [JsonPropertyName("percentage")]
+    public decimal Percentage { get; set; }
+}

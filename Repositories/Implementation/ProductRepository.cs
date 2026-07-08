@@ -65,10 +65,23 @@ public class ProductRepository : GenericRepository<Product>, IProductRepository
             .FirstOrDefaultAsync(p => p.ProductId == productId);
     }
 
-    public async Task<List<(long ProductId, long VariantId, int TotalSold, decimal TotalRevenue)>> GetTopSellingVariantStatsAsync()
+    public async Task<List<(long ProductId, long VariantId, int TotalSold, decimal TotalRevenue)>> GetTopSellingVariantStatsAsync(DateTime? fromDate = null, DateTime? toDate = null)
     {
-        var stats = await _dbContext.OrderDetails
-            .Where(od => od.Order.PaymentStatus == "Success")
+        var query = _dbContext.OrderDetails
+            .Where(od => od.Order.PaymentStatus == "Success");
+
+        if (fromDate.HasValue)
+        {
+            query = query.Where(od => od.Order.CreatedAt >= fromDate.Value);
+        }
+        
+        if (toDate.HasValue)
+        {
+            // toDate.Value.AddDays(1) can be used if they send date without time, but let's assume exact DateTime is passed or handled by service
+            query = query.Where(od => od.Order.CreatedAt <= toDate.Value);
+        }
+
+        var stats = await query
             .GroupBy(od => new { od.ProductVariantId, od.ProductVariant.ProductId })
             .Select(g => new
             {

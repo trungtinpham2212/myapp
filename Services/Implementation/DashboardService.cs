@@ -18,22 +18,19 @@ public class DashboardService : IDashboardService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ApiResponse<DashboardStatsDto>> GetDashboardStatsAsync()
+    public async Task<ApiResponse<DashboardStatsDto>> GetDashboardStatsAsync(DateTime? fromDate = null, DateTime? toDate = null)
     {
         // Total Users
-        int totalCustomers = await _unitOfWork.DbContext.Users.CountAsync();
+        int totalCustomers = await _unitOfWork.UserRepository.CountUsersAsync(fromDate, toDate);
 
         // Orders stats
-        var successfulOrdersQuery = _unitOfWork.DbContext.Orders.Where(o => o.PaymentStatus == "Success");
+        var orderStats = await _unitOfWork.OrderRepository.GetOrderStatsAsync(fromDate, toDate);
         
-        int totalSuccessfulOrders = await successfulOrdersQuery.CountAsync();
-        decimal totalRevenue = await successfulOrdersQuery.SumAsync(o => o.FinalAmount);
-
         var stats = new DashboardStatsDto
         {
             TotalNewCustomers = totalCustomers,
-            TotalSuccessfulOrders = totalSuccessfulOrders,
-            TotalRevenue = totalRevenue
+            TotalSuccessfulOrders = orderStats.TotalSuccessfulOrders,
+            TotalRevenue = orderStats.TotalRevenue
         };
 
         return new ApiResponse<DashboardStatsDto>
@@ -43,9 +40,9 @@ public class DashboardService : IDashboardService
         };
     }
 
-    public async Task<ApiResponse<List<TopSellingProductDto>>> GetTopSellingProductsAsync(int top = 5)
+    public async Task<ApiResponse<List<TopSellingProductDto>>> GetTopSellingProductsAsync(int top = 5, DateTime? fromDate = null, DateTime? toDate = null)
     {
-        var variantStats = await _unitOfWork.ProductRepository.GetTopSellingVariantStatsAsync();
+        var variantStats = await _unitOfWork.ProductRepository.GetTopSellingVariantStatsAsync(fromDate, toDate);
 
         var topProductStats = variantStats
             .GroupBy(x => x.ProductId)
@@ -108,19 +105,18 @@ public class DashboardService : IDashboardService
         };
     }
 
-    public async Task<ApiResponse<List<RevenueByDayDto>>> GetRevenueLast7DaysAsync()
+    public async Task<ApiResponse<List<RevenueByDayDto>>> GetRevenueByDayAsync(DateTime? fromDate = null, DateTime? toDate = null)
     {
-        var endDate = DateTime.UtcNow.Date;
-        var startDate = endDate.AddDays(-6); // 7 days including today
+        var endDate = toDate?.Date ?? DateTime.UtcNow.Date;
+        var startDate = fromDate?.Date ?? endDate.AddDays(-6); // default to 7 days including today
 
-        var orders = await _unitOfWork.DbContext.Orders
-            .Where(o => o.PaymentStatus == "Success" && o.CreatedAt != null && o.CreatedAt >= startDate && o.CreatedAt < endDate.AddDays(1))
-            .Select(o => new { o.CreatedAt, o.FinalAmount })
-            .ToListAsync();
+        var orders = await _unitOfWork.OrderRepository.GetSuccessfulOrdersRevenueAsync(startDate, endDate.AddDays(1));
 
         var result = new List<RevenueByDayDto>();
+        int days = (endDate - startDate).Days + 1;
+        if (days > 100) days = 100; // safety limit
 
-        for (int i = 0; i < 7; i++)
+        for (int i = 0; i < days; i++)
         {
             var currentDate = startDate.AddDays(i);
             
@@ -139,6 +135,33 @@ public class DashboardService : IDashboardService
         {
             Success = true,
             Data = result
+        };
+    }
+
+    public async Task<ApiResponse<List<RevenueByCategoryDto>>> GetRevenueByCategoryAsync(DateTime? fromDate = null, DateTime? toDate = null)
+    {
+        var categoryStatsRaw = await _unitOfWork.OrderRepository.GetRevenueByCategoryAsync(fromDate, toDate);
+
+        var categoryStats = categoryStatsRaw.Select(c => new RevenueByCategoryDto
+        {
+            CategoryId = c.CategoryId,
+            CategoryName = c.CategoryName,
+            Revenue = c.Revenue
+        }).ToList();
+
+        decimal totalRevenue = categoryStats.Sum(c => c.Revenue);
+        if (totalRevenue > 0)
+        {
+            foreach (var stat in categoryStats)
+            {
+                stat.Percentage = Math.Round((stat.Revenue / totalRevenue) * 100, 2);
+            }
+        }
+
+        return new ApiResponse<List<RevenueByCategoryDto>>
+        {
+            Success = true,
+            Data = categoryStats
         };
     }
 }

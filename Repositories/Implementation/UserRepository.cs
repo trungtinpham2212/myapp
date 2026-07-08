@@ -21,4 +21,12 @@ public class UserRepository : GenericRepository<User>, IUserRepository
     {
         return await _dbContext.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
     }
+
+    public async Task<int> CountUsersAsync(System.DateTime? fromDate = null, System.DateTime? toDate = null)
+    {
+        var usersQuery = _dbContext.Users.AsQueryable();
+        if (fromDate.HasValue) usersQuery = usersQuery.Where(u => u.CreatedAt >= fromDate.Value);
+        if (toDate.HasValue) usersQuery = usersQuery.Where(u => u.CreatedAt <= toDate.Value);
+        return await usersQuery.CountAsync();
+    }
 }

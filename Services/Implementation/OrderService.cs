@@ -12,10 +12,12 @@ namespace Services.Implementation;
 public class OrderService : IOrderService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INotificationService _notificationService;
 
-    public OrderService(IUnitOfWork unitOfWork)
+    public OrderService(IUnitOfWork unitOfWork, INotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
+        _notificationService = notificationService;
     }
 
     public async Task<ApiResponse<CreateOrderResponseDto>> CreateOrderAsync(Guid userId, CreateOrderRequest request)
@@ -143,6 +145,50 @@ public class OrderService : IOrderService
 
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            // Push Notification cho đơn hàng COD
+            if (order.PaymentMethod == "COD")
+            {
+                // Cho Admin
+                await _notificationService.PushNotificationAsync(
+                    userId: null,
+                    title: "Đơn đặt hàng mới (COD)",
+                    content: $"Khách hàng vừa đặt đơn hàng #{order.OrderId} với phương thức thanh toán COD.",
+                    type: "info",
+                    targetType: "Order",
+                    targetId: order.OrderId.ToString()
+                );
+
+                // Cho Khách hàng
+                await _notificationService.PushNotificationAsync(
+                    userId: userId,
+                    title: "Đặt hàng thành công",
+                    content: $"Đơn hàng #{order.OrderId} của bạn đã được ghi nhận thành công (Thanh toán khi nhận hàng).",
+                    type: "success",
+                    targetType: "Order",
+                    targetId: order.OrderId.ToString()
+                );
+            }
+
+            // Push Notification cảnh báo tồn kho
+            foreach (var ci in cartItems)
+            {
+                var variant = ci.ProductVariant;
+                if (variant != null && variant.StockQuantity < 5)
+                {
+                    var product = await _unitOfWork.ProductRepository.GetByIdAsync(variant.ProductId);
+                    string productName = product != null ? product.Name : $"Variant {variant.ProductVariantId}";
+                    
+                    await _notificationService.PushNotificationAsync(
+                        userId: null,
+                        title: "Sản phẩm sắp hết hàng",
+                        content: $"{productName} ({variant.Color}, {variant.Storage}) (SL: {variant.StockQuantity})",
+                        type: "warning",
+                        targetType: "Product",
+                        targetId: variant.ProductId.ToString()
+                    );
+                }
+            }
 
             return new ApiResponse<CreateOrderResponseDto>
             {

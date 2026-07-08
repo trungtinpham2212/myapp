@@ -18,11 +18,13 @@ public class AuthService : IAuthService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration _config;
+    private readonly INotificationService _notificationService;
 
-    public AuthService(IUnitOfWork unitOfWork, IConfiguration config)
+    public AuthService(IUnitOfWork unitOfWork, IConfiguration config, INotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
         _config = config;
+        _notificationService = notificationService;
     }
 
     public async Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request)
@@ -94,6 +96,16 @@ public class AuthService : IAuthService
         newUser.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
         _unitOfWork.UserRepository.Update(newUser);
         await _unitOfWork.SaveChangesAsync();
+
+        // Push notification to Admin
+        await _notificationService.PushNotificationAsync(
+            userId: null, // Admin
+            title: "Khách hàng mới",
+            content: $"Khách hàng {newUser.FullName} vừa đăng ký tài khoản.",
+            type: "info",
+            targetType: "User",
+            targetId: newUser.UserId.ToString()
+        );
 
         return new ApiResponse<AuthResponse>
         {

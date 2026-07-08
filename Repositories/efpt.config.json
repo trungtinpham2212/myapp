@@ -31,6 +31,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.notifications",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.order_details",
          "ObjectType": 0
       },
