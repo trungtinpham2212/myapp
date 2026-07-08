@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Repositories.UnitOfWork;
 using Services.BM;
+using Services.Interface;
 using myapp.Hubs;
 
 namespace myapp.Controllers;
@@ -18,12 +19,14 @@ public class WebhooksController : ControllerBase
     private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration _configuration;
     private readonly IHubContext<PaymentHub> _hubContext;
+    private readonly INotificationService _notificationService;
 
-    public WebhooksController(IUnitOfWork unitOfWork, IConfiguration configuration, IHubContext<PaymentHub> hubContext)
+    public WebhooksController(IUnitOfWork unitOfWork, IConfiguration configuration, IHubContext<PaymentHub> hubContext, INotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
         _configuration = configuration;
         _hubContext = hubContext;
+        _notificationService = notificationService;
     }
 
     [HttpPost("sepay")]
@@ -101,6 +104,53 @@ public class WebhooksController : ControllerBase
         }
 
         await _unitOfWork.SaveChangesAsync();
+
+        // Push Notification to Admin (Đơn hàng đã thanh toán)
+        await _notificationService.PushNotificationAsync(
+            userId: null,
+            title: "Đơn hàng đã thanh toán",
+            content: $"Đơn hàng #{order.OrderId} đã được thanh toán thành công qua chuyển khoản.",
+            type: "success",
+            targetType: "Order",
+            targetId: order.OrderId.ToString()
+        );
+
+        // Push Notification to User (nếu có UserId)
+        if (order.UserId != Guid.Empty)
+        {
+            await _notificationService.PushNotificationAsync(
+                userId: order.UserId,
+                title: "Thanh toán thành công",
+                content: $"Đơn hàng #{order.OrderId} của bạn đã được thanh toán thành công.",
+                type: "success",
+                targetType: "Order",
+                targetId: order.OrderId.ToString()
+            );
+        }
+
+        // Logic check Low Stock (sản phẩm sắp hết hàng)
+        var orderWithDetails = await _unitOfWork.OrderRepository.GetOrderWithDetailsAsync(order.OrderId);
+        if (orderWithDetails != null && orderWithDetails.OrderDetails != null)
+        {
+            foreach (var detail in orderWithDetails.OrderDetails)
+            {
+                var variant = await _unitOfWork.ProductVariantRepository.GetByIdAsync(detail.ProductVariantId);
+                if (variant != null && variant.StockQuantity < 5)
+                {
+                    var product = await _unitOfWork.ProductRepository.GetByIdAsync(variant.ProductId);
+                    string productName = product != null ? product.Name : $"Variant {variant.ProductVariantId}";
+                    
+                    await _notificationService.PushNotificationAsync(
+                        userId: null, // Admin only
+                        title: "Sản phẩm sắp hết hàng",
+                        content: $"{productName} ({variant.Color}, {variant.Storage}) (SL: {variant.StockQuantity})",
+                        type: "warning",
+                        targetType: "Product",
+                        targetId: variant.ProductId.ToString()
+                    );
+                }
+            }
+        }
 
         // Gửi SignalR tới FE thông báo đơn hàng đã thanh toán thành công
         await _hubContext.Clients.All.SendAsync("PaymentSuccess", orderId);

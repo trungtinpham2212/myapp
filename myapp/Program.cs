@@ -78,6 +78,7 @@ builder.Services.AddDbContext<myappContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register UnitOfWork & Business Services
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
@@ -85,6 +86,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IInteractionService, InteractionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationPublisher, SignalRNotificationPublisher>();
 
 var app = builder.Build();
 
@@ -103,5 +106,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<PaymentHub>("/paymentHub");
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

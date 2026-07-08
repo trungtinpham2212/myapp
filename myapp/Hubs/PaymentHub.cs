@@ -5,5 +5,5 @@ namespace myapp.Hubs;
 
 public class PaymentHub : Hub
 {
-    // Clients có thể gọi hàm này (tùy chọn) hoặc chỉ dùng để server push về client
+    // Clients có thể gọi hàm này hoặc chỉ dùng để server push về client
 }

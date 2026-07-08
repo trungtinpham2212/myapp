@@ -1,10 +1,12 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Services.Interface;
 
 namespace myapp.Controllers;
 
 [ApiController]
+[Authorize(Roles = "2")]
 [Route("api/dashboard")]
 public class DashboardController : ControllerBase
 {
@@ -16,23 +18,30 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("stats")]
-    public async Task<IActionResult> GetStats()
+    public async Task<IActionResult> GetStats([FromQuery] System.DateTime? fromDate = null, [FromQuery] System.DateTime? toDate = null)
     {
-        var response = await _dashboardService.GetDashboardStatsAsync();
+        var response = await _dashboardService.GetDashboardStatsAsync(fromDate, toDate);
         return Ok(response);
     }
 
     [HttpGet("top-selling")]
-    public async Task<IActionResult> GetTopSellingProducts([FromQuery] int top = 5)
+    public async Task<IActionResult> GetTopSellingProducts([FromQuery] int top = 5, [FromQuery] System.DateTime? fromDate = null, [FromQuery] System.DateTime? toDate = null)
     {
-        var response = await _dashboardService.GetTopSellingProductsAsync(top);
+        var response = await _dashboardService.GetTopSellingProductsAsync(top, fromDate, toDate);
         return Ok(response);
     }
 
     [HttpGet("revenue-last-7-days")]
-    public async Task<IActionResult> GetRevenueLast7Days()
+    public async Task<IActionResult> GetRevenueLast7Days([FromQuery] System.DateTime? fromDate = null, [FromQuery] System.DateTime? toDate = null)
     {
-        var response = await _dashboardService.GetRevenueLast7DaysAsync();
+        var response = await _dashboardService.GetRevenueByDayAsync(fromDate, toDate);
+        return Ok(response);
+    }
+
+    [HttpGet("revenue-by-category")]
+    public async Task<IActionResult> GetRevenueByCategory([FromQuery] System.DateTime? fromDate = null, [FromQuery] System.DateTime? toDate = null)
+    {
+        var response = await _dashboardService.GetRevenueByCategoryAsync(fromDate, toDate);
         return Ok(response);
     }
 }
