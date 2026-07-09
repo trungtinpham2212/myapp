@@ -14,11 +14,13 @@ public class ProductsController : ControllerBase
 {
     private readonly IProductService _productService;
     private readonly IInteractionService _interactionService;
+    private readonly ICloudinaryService _cloudinaryService;
 
-    public ProductsController(IProductService productService, IInteractionService interactionService)
+    public ProductsController(IProductService productService, IInteractionService interactionService, ICloudinaryService cloudinaryService)
     {
         _productService = productService;
         _interactionService = interactionService;
+        _cloudinaryService = cloudinaryService;
     }
 
     private Guid GetUserId()
@@ -74,5 +76,89 @@ public class ProductsController : ControllerBase
             return BadRequest(response);
         }
         return StatusCode(201, response);
+    }
+
+    [Authorize(Roles = "2")]
+    [HttpPost]
+    public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
+    {
+        var response = await _productService.CreateProductAsync(request);
+        if (!response.Success)
+        {
+            return BadRequest(response);
+        }
+        return StatusCode(201, response);
+    }
+
+    [Authorize(Roles = "2")]
+    [HttpPut("{product_id}")]
+    public async Task<IActionResult> UpdateProduct([FromRoute(Name = "product_id")] long productId, [FromBody] UpdateProductRequest request)
+    {
+        var response = await _productService.UpdateProductAsync(productId, request);
+        if (!response.Success)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
+
+    [Authorize(Roles = "2")]
+    [HttpDelete("{product_id}")]
+    public async Task<IActionResult> DeleteProduct([FromRoute(Name = "product_id")] long productId)
+    {
+        var response = await _productService.DeleteProductAsync(productId);
+        if (!response.Success)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
+
+    [Authorize(Roles = "2")]
+    [HttpPost("image")]
+    public async Task<IActionResult> UploadImage(Microsoft.AspNetCore.Http.IFormFile file)
+    {
+        try
+        {
+            var url = await _cloudinaryService.UploadImageAsync(file);
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                Message = "Tải ảnh thành công",
+                Data = url
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<string>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    [Authorize(Roles = "2")]
+    [HttpPost("{product_id}/variants")]
+    public async Task<IActionResult> AddProductVariants([FromRoute(Name = "product_id")] long productId, [FromBody] List<CreateProductVariantDto> variants)
+    {
+        var response = await _productService.AddProductVariantsAsync(productId, variants);
+        if (!response.Success)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
+
+    [Authorize(Roles = "2")]
+    [HttpDelete("{product_id}/variants/{variant_id}")]
+    public async Task<IActionResult> DeleteProductVariant([FromRoute(Name = "product_id")] long productId, [FromRoute(Name = "variant_id")] long variantId)
+    {
+        var response = await _productService.DeleteProductVariantAsync(productId, variantId);
+        if (!response.Success)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
     }
 }

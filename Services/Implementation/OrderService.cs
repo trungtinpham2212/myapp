@@ -144,7 +144,6 @@ public class OrderService : IOrderService
             _unitOfWork.CartRepository.Update(cart);
 
             await _unitOfWork.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             // Push Notification cho đơn hàng COD
             if (order.PaymentMethod == "COD")
@@ -190,6 +189,8 @@ public class OrderService : IOrderService
                 }
             }
 
+            await transaction.CommitAsync();
+
             return new ApiResponse<CreateOrderResponseDto>
             {
                 Success = true,
@@ -207,7 +208,7 @@ public class OrderService : IOrderService
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            try { await transaction.RollbackAsync(); } catch { }
             return new ApiResponse<CreateOrderResponseDto>
             {
                 Success = false,

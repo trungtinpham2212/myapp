@@ -128,3 +128,84 @@ public class TopSellingProductDto
     [JsonPropertyName("variants")]
     public List<TopSellingVariantDto> Variants { get; set; } = new();
 }
+
+public class CreateProductRequest
+{
+    [JsonPropertyName("category_id")]
+    public int CategoryId { get; set; }
+
+    [JsonPropertyName("brand_id")]
+    public int BrandId { get; set; }
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("thumbnail_url")]
+    public string? ThumbnailUrl { get; set; }
+
+    [JsonPropertyName("is_featured")]
+    public bool? IsFeatured { get; set; }
+
+    [JsonPropertyName("variants")]
+    public List<CreateProductVariantDto> Variants { get; set; } = new();
+}
+
+public class CreateProductVariantDto
+{
+    [JsonPropertyName("color")]
+    public string Color { get; set; } = string.Empty;
+
+    [JsonPropertyName("storage")]
+    public string Storage { get; set; } = string.Empty;
+
+    [JsonPropertyName("original_price")]
+    public decimal OriginalPrice { get; set; }
+
+    [JsonPropertyName("discount_percentage")]
+    public int? DiscountPercentage { get; set; }
+
+    [JsonPropertyName("stock_quantity")]
+    public int? StockQuantity { get; set; }
+}
+
+public class UpdateProductRequest
+{
+    [JsonPropertyName("category_id")]
+    public int? CategoryId { get; set; }
+
+    [JsonPropertyName("brand_id")]
+    public int? BrandId { get; set; }
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("thumbnail_url")]
+    public string? ThumbnailUrl { get; set; }
+
+    [JsonPropertyName("is_featured")]
+    public bool? IsFeatured { get; set; }
+
+    [JsonPropertyName("variants")]
+    public List<UpdateProductVariantDto>? Variants { get; set; }
+}
+
+public class UpdateProductVariantDto
+{
+    [JsonPropertyName("product_variant_id")]
+    public long ProductVariantId { get; set; }
+
+    [JsonPropertyName("color")]
+    public string? Color { get; set; }
+
+    [JsonPropertyName("storage")]
+    public string? Storage { get; set; }
+
+    [JsonPropertyName("original_price")]
+    public decimal? OriginalPrice { get; set; }
+
+    [JsonPropertyName("discount_percentage")]
+    public int? DiscountPercentage { get; set; }
+
+    [JsonPropertyName("stock_quantity")]
+    public int? StockQuantity { get; set; }
+}
