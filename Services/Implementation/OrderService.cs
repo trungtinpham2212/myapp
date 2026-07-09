@@ -22,7 +22,7 @@ public class OrderService : IOrderService
 
     public async Task<ApiResponse<CreateOrderResponseDto>> CreateOrderAsync(Guid userId, CreateOrderRequest request)
     {
-        using var transaction = await _unitOfWork.BeginTransactionAsync();
+        var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             var cart = await _unitOfWork.CartRepository.GetCartByUserIdAsync(userId);
@@ -212,8 +212,12 @@ public class OrderService : IOrderService
             return new ApiResponse<CreateOrderResponseDto>
             {
                 Success = false,
-                Message = $"Lỗi khi tạo đơn hàng: {ex.Message}"
+                Message = ex.Message
             };
+        }
+        finally
+        {
+            try { transaction.Dispose(); } catch { }
         }
     }
 
