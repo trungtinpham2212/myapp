@@ -12,5 +12,7 @@ public interface IProductService
     Task<ApiResponse<ProductDto>> UpdateProductAsync(long productId, UpdateProductRequest request);
     Task<ApiResponse<bool>> DeleteProductAsync(long productId);
     Task<ApiResponse<ProductDto>> AddProductVariantsAsync(long productId, List<CreateProductVariantDto> variants);
-    Task<ApiResponse<bool>> DeleteProductVariantAsync(long productId, long variantId);
+    Task<ApiResponse<bool>> DeleteProductVariantsAsync(long productId, List<long> variantIds);
+    Task<ApiResponse<List<ImageDto>>> AddProductImagesAsync(long productId, List<Microsoft.AspNetCore.Http.IFormFile> images);
+    Task<ApiResponse<bool>> DeleteProductImagesAsync(long productId, List<long> imageIds);
 }

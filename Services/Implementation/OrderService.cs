@@ -175,8 +175,7 @@ public class OrderService : IOrderService
                 var variant = ci.ProductVariant;
                 if (variant != null && variant.StockQuantity < 5)
                 {
-                    var product = await _unitOfWork.ProductRepository.GetByIdAsync(variant.ProductId);
-                    string productName = product != null ? product.Name : $"Variant {variant.ProductVariantId}";
+                    string productName = variant.Product?.Name ?? $"Variant {variant.ProductVariantId}";
                     
                     await _notificationService.PushNotificationAsync(
                         userId: null,
@@ -212,7 +211,7 @@ public class OrderService : IOrderService
             return new ApiResponse<CreateOrderResponseDto>
             {
                 Success = false,
-                Message = ex.Message
+                Message = ex.InnerException != null ? ex.InnerException.Message : ex.Message
             };
         }
         finally

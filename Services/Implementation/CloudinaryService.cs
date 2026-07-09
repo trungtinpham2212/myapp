@@ -47,4 +47,26 @@ public class CloudinaryService : ICloudinaryService
 
         return uploadResult.SecureUrl.AbsoluteUri;
     }
+
+    public async Task<bool> DeleteImageAsync(string imageUrl)
+    {
+        if (string.IsNullOrEmpty(imageUrl)) return false;
+
+        try
+        {
+            var uri = new Uri(imageUrl);
+            var segments = uri.Segments;
+            var lastSegment = segments[segments.Length - 1];
+            var publicId = System.IO.Path.GetFileNameWithoutExtension(lastSegment);
+
+            var deletionParams = new DeletionParams(publicId);
+            var result = await _cloudinary.DestroyAsync(deletionParams);
+
+            return result.Result == "ok";
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

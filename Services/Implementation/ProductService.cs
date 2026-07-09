@@ -12,10 +12,12 @@ namespace Services.Implementation;
 public class ProductService : IProductService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICloudinaryService _cloudinaryService;
 
-    public ProductService(IUnitOfWork unitOfWork)
+    public ProductService(IUnitOfWork unitOfWork, ICloudinaryService cloudinaryService)
     {
         _unitOfWork = unitOfWork;
+        _cloudinaryService = cloudinaryService;
     }
 
     public async Task<ApiResponse<List<ProductDto>>> GetProductsAsync(
@@ -301,40 +303,49 @@ public class ProductService : IProductService
         };
     }
 
-    public async Task<ApiResponse<bool>> DeleteProductVariantAsync(long productId, long variantId)
+    public async Task<ApiResponse<bool>> DeleteProductVariantsAsync(long productId, List<long> variantIds)
     {
+        if (variantIds == null || !variantIds.Any())
+        {
+            return new ApiResponse<bool> { Success = false, Message = "Danh sách biến thể cần xóa trống", Data = false };
+        }
+
         var product = await _unitOfWork.ProductRepository.GetProductWithDetailsAsync(productId);
         if (product == null)
         {
             return new ApiResponse<bool> { Success = false, Message = "Không tìm thấy sản phẩm", Data = false };
         }
 
-        var variant = product.ProductVariants.FirstOrDefault(v => v.ProductVariantId == variantId);
-        if (variant == null)
+        var variantsToDelete = product.ProductVariants.Where(v => variantIds.Contains(v.ProductVariantId)).ToList();
+        if (!variantsToDelete.Any())
         {
-            return new ApiResponse<bool> { Success = false, Message = "Không tìm thấy biến thể", Data = false };
+            return new ApiResponse<bool> { Success = false, Message = "Không tìm thấy biến thể nào hợp lệ để xóa", Data = false };
         }
 
-        if (product.ProductVariants.Count == 1)
+        if (product.ProductVariants.Count == variantsToDelete.Count)
         {
-            return new ApiResponse<bool> { Success = false, Message = "Không thể xóa biến thể duy nhất của sản phẩm", Data = false };
+            return new ApiResponse<bool> { Success = false, Message = "Không thể xóa hết tất cả biến thể của sản phẩm", Data = false };
         }
 
-        // Ràng buộc: không được xóa khi nằm trong cart hay đã order
-        var cartItemCount = await _unitOfWork.CartItemRepository.CountAsync(ci => ci.ProductVariantId == variantId);
+        // Kiểm tra tất cả các variant cần xóa có nằm trong giỏ hàng không (chỉ 1 query DB)
+        var cartItemCount = await _unitOfWork.CartItemRepository.CountAsync(ci => variantIds.Contains(ci.ProductVariantId));
         if (cartItemCount > 0)
         {
-            return new ApiResponse<bool> { Success = false, Message = "Không thể xóa biến thể đang nằm trong giỏ hàng", Data = false };
+            return new ApiResponse<bool> { Success = false, Message = "Không thể xóa vì có ít nhất 1 biến thể đang nằm trong giỏ hàng", Data = false };
         }
 
-        var orderDetailCount = await _unitOfWork.OrderDetailRepository.CountAsync(od => od.ProductVariantId == variantId);
+        // Kiểm tra tất cả các variant cần xóa có nằm trong đơn hàng không (chỉ 1 query DB)
+        var orderDetailCount = await _unitOfWork.OrderDetailRepository.CountAsync(od => variantIds.Contains(od.ProductVariantId));
         if (orderDetailCount > 0)
         {
-            return new ApiResponse<bool> { Success = false, Message = "Không thể xóa biến thể đã có đơn hàng", Data = false };
+            return new ApiResponse<bool> { Success = false, Message = "Không thể xóa vì có ít nhất 1 biến thể đã có đơn hàng", Data = false };
         }
 
-        // Remove variant
-        product.ProductVariants.Remove(variant);
+        // Remove variants
+        foreach (var variant in variantsToDelete)
+        {
+            product.ProductVariants.Remove(variant);
+        }
 
         // Calculate fields again
         product.MinPrice = product.ProductVariants.Min(v => v.SalePrice);
@@ -346,5 +357,97 @@ public class ProductService : IProductService
         await _unitOfWork.SaveChangesAsync();
 
         return new ApiResponse<bool> { Success = true, Message = "Xóa biến thể thành công", Data = true };
+    }
+
+    public async Task<ApiResponse<List<ImageDto>>> AddProductImagesAsync(long productId, List<Microsoft.AspNetCore.Http.IFormFile> images)
+    {
+        if (images == null || !images.Any())
+        {
+            return new ApiResponse<List<ImageDto>> { Success = false, Message = "Không có ảnh nào được tải lên", Data = null };
+        }
+
+        var product = await _unitOfWork.ProductRepository.GetProductWithDetailsAsync(productId);
+        if (product == null)
+        {
+            return new ApiResponse<List<ImageDto>> { Success = false, Message = "Không tìm thấy sản phẩm", Data = null };
+        }
+
+        var uploadedImages = new List<ImageDto>();
+        int currentSortOrder = product.ProductImages.Any() ? (product.ProductImages.Max(i => i.SortOrder) ?? 0) : 0;
+
+        var productImages = new List<ProductImage>();
+
+        foreach (var file in images)
+        {
+            try
+            {
+                string imageUrl = await _cloudinaryService.UploadImageAsync(file);
+                currentSortOrder++;
+
+                var productImage = new ProductImage
+                {
+                    ProductId = productId,
+                    ImageUrl = imageUrl,
+                    SortOrder = currentSortOrder,
+                    CreatedAt = System.DateTime.UtcNow,
+                    UpdatedAt = System.DateTime.UtcNow
+                };
+
+                await _unitOfWork.ProductImageRepository.AddAsync(productImage);
+                productImages.Add(productImage);
+            }
+            catch (System.Exception ex)
+            {
+                return new ApiResponse<List<ImageDto>> { Success = false, Message = $"Lỗi khi tải ảnh lên: {ex.Message}", Data = null };
+            }
+        }
+
+        // Lưu toàn bộ một lần vào DB thay vì lưu từng cái
+        await _unitOfWork.SaveChangesAsync(); 
+
+        foreach (var pi in productImages)
+        {
+            uploadedImages.Add(new ImageDto
+            {
+                ProductImageId = pi.ProductImageId,
+                ImageUrl = pi.ImageUrl,
+                SortOrder = pi.SortOrder
+            });
+        }
+
+        return new ApiResponse<List<ImageDto>> { Success = true, Message = "Tải ảnh thành công", Data = uploadedImages };
+    }
+
+    public async Task<ApiResponse<bool>> DeleteProductImagesAsync(long productId, List<long> imageIds)
+    {
+        if (imageIds == null || !imageIds.Any())
+        {
+            return new ApiResponse<bool> { Success = false, Message = "Danh sách ảnh cần xóa trống", Data = false };
+        }
+
+        var product = await _unitOfWork.ProductRepository.GetProductWithDetailsAsync(productId);
+        if (product == null)
+        {
+            return new ApiResponse<bool> { Success = false, Message = "Không tìm thấy sản phẩm", Data = false };
+        }
+
+        var imagesToDelete = product.ProductImages.Where(img => imageIds.Contains(img.ProductImageId)).ToList();
+        if (!imagesToDelete.Any())
+        {
+            return new ApiResponse<bool> { Success = false, Message = "Không tìm thấy ảnh nào hợp lệ để xóa", Data = false };
+        }
+
+        foreach (var img in imagesToDelete)
+        {
+            // Cố gắng xóa ảnh trên Cloudinary
+            await _cloudinaryService.DeleteImageAsync(img.ImageUrl);
+
+            // Xóa record trong DB
+            _unitOfWork.ProductImageRepository.Delete(img);
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+
+        return new ApiResponse<bool> { Success = true, Message = "Xóa ảnh thành công", Data = true };
     }
 }

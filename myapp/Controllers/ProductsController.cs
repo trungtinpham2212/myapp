@@ -151,10 +151,34 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize(Roles = "2")]
-    [HttpDelete("{product_id}/variants/{variant_id}")]
-    public async Task<IActionResult> DeleteProductVariant([FromRoute(Name = "product_id")] long productId, [FromRoute(Name = "variant_id")] long variantId)
+    [HttpDelete("{product_id}/variants")]
+    public async Task<IActionResult> DeleteProductVariants([FromRoute(Name = "product_id")] long productId, [FromBody] List<long> variantIds)
     {
-        var response = await _productService.DeleteProductVariantAsync(productId, variantId);
+        var response = await _productService.DeleteProductVariantsAsync(productId, variantIds);
+        if (!response.Success)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
+
+    [Authorize(Roles = "2")]
+    [HttpPost("{product_id}/images")]
+    public async Task<IActionResult> AddProductImages([FromRoute(Name = "product_id")] long productId, [FromForm] List<Microsoft.AspNetCore.Http.IFormFile> images)
+    {
+        var response = await _productService.AddProductImagesAsync(productId, images);
+        if (!response.Success)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
+
+    [Authorize(Roles = "2")]
+    [HttpDelete("{product_id}/images")]
+    public async Task<IActionResult> DeleteProductImages([FromRoute(Name = "product_id")] long productId, [FromBody] List<long> imageIds)
+    {
+        var response = await _productService.DeleteProductImagesAsync(productId, imageIds);
         if (!response.Success)
         {
             return BadRequest(response);
