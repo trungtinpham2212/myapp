@@ -112,4 +112,63 @@ public class UserService : IUserService
 
         return new ApiResponse<string> { Success = true, Message = isActive ? "Đã kích hoạt khách hàng" : "Đã vô hiệu hóa khách hàng" };
     }
+
+    public async Task<ApiResponse<UserProfileDto>> GetProfileAsync(Guid userId)
+    {
+        var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return new ApiResponse<UserProfileDto> { Success = false, Message = "Người dùng không tồn tại" };
+        }
+
+        var totalSpent = await _unitOfWork.OrderRepository.GetTotalSpentByUserIdAsync(userId);
+
+        var profileDto = new UserProfileDto
+        {
+            UserId = user.UserId,
+            FullName = user.FullName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            AvatarUrl = user.AvatarUrl,
+            Role = user.Role,
+            CreatedAt = user.CreatedAt,
+            TotalSpent = totalSpent
+        };
+
+        return new ApiResponse<UserProfileDto> { Success = true, Data = profileDto };
+    }
+
+    public async Task<ApiResponse<UserProfileDto>> UpdateProfileAsync(Guid userId, UpdateProfileRequestDto request)
+    {
+        var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return new ApiResponse<UserProfileDto> { Success = false, Message = "Người dùng không tồn tại" };
+        }
+
+        if (request.FullName != null) user.FullName = request.FullName;
+        if (request.PhoneNumber != null) user.PhoneNumber = request.PhoneNumber;
+        if (request.AvatarUrl != null) user.AvatarUrl = request.AvatarUrl;
+
+        user.UpdatedAt = DateTime.UtcNow;
+
+        _unitOfWork.UserRepository.Update(user);
+        await _unitOfWork.SaveChangesAsync();
+
+        var totalSpent = await _unitOfWork.OrderRepository.GetTotalSpentByUserIdAsync(userId);
+
+        var profileDto = new UserProfileDto
+        {
+            UserId = user.UserId,
+            FullName = user.FullName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            AvatarUrl = user.AvatarUrl,
+            Role = user.Role,
+            CreatedAt = user.CreatedAt,
+            TotalSpent = totalSpent
+        };
+
+        return new ApiResponse<UserProfileDto> { Success = true, Message = "Cập nhật thành công", Data = profileDto };
+    }
 }

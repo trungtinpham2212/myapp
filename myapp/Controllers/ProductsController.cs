@@ -14,13 +14,11 @@ public class ProductsController : ControllerBase
 {
     private readonly IProductService _productService;
     private readonly IInteractionService _interactionService;
-    private readonly ICloudinaryService _cloudinaryService;
 
-    public ProductsController(IProductService productService, IInteractionService interactionService, ICloudinaryService cloudinaryService)
+    public ProductsController(IProductService productService, IInteractionService interactionService)
     {
         _productService = productService;
         _interactionService = interactionService;
-        _cloudinaryService = cloudinaryService;
     }
 
     private Guid GetUserId()
@@ -112,30 +110,6 @@ public class ProductsController : ControllerBase
             return BadRequest(response);
         }
         return Ok(response);
-    }
-
-    [Authorize(Roles = "2")]
-    [HttpPost("image")]
-    public async Task<IActionResult> UploadImage(Microsoft.AspNetCore.Http.IFormFile file)
-    {
-        try
-        {
-            var url = await _cloudinaryService.UploadImageAsync(file);
-            return Ok(new ApiResponse<string>
-            {
-                Success = true,
-                Message = "Tải ảnh thành công",
-                Data = url
-            });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new ApiResponse<string>
-            {
-                Success = false,
-                Message = ex.Message
-            });
-        }
     }
 
     [Authorize(Roles = "2")]

@@ -37,6 +37,13 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
             .CountAsync(o => o.UserId == userId && o.OrderStatus != "Completed" && o.OrderStatus != "Cancelled");
     }
 
+    public async Task<decimal> GetTotalSpentByUserIdAsync(System.Guid userId)
+    {
+        return await _dbContext.Orders
+            .Where(o => o.UserId == userId && o.PaymentStatus == "Success")
+            .SumAsync(o => o.FinalAmount);
+    }
+
     public async Task<System.Collections.Generic.List<(System.DateTime? CreatedAt, decimal FinalAmount)>> GetSuccessfulOrdersRevenueAsync(System.DateTime startDate, System.DateTime endDate)
     {
         var query = _dbContext.Orders
