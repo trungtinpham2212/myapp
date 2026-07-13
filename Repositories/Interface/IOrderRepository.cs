@@ -9,4 +9,5 @@ public interface IOrderRepository : IGenericRepository<Order>
     Task<(int TotalSuccessfulOrders, decimal TotalRevenue)> GetOrderStatsAsync(System.DateTime? fromDate = null, System.DateTime? toDate = null);
     Task<System.Collections.Generic.List<(System.DateTime? CreatedAt, decimal FinalAmount)>> GetSuccessfulOrdersRevenueAsync(System.DateTime startDate, System.DateTime endDate);
     Task<System.Collections.Generic.List<(int CategoryId, string CategoryName, decimal Revenue)>> GetRevenueByCategoryAsync(System.DateTime? fromDate = null, System.DateTime? toDate = null);
+    Task<int> CountIncompleteOrdersByUserIdAsync(System.Guid userId);
 }

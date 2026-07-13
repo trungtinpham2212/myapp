@@ -5,7 +5,7 @@ using Services.Interface;
 
 namespace API.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/brands")]
 [ApiController]
 public class BrandsController : ControllerBase
 {

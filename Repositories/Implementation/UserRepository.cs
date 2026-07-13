@@ -29,4 +29,26 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         if (toDate.HasValue) usersQuery = usersQuery.Where(u => u.CreatedAt <= toDate.Value);
         return await usersQuery.CountAsync();
     }
+
+    public async Task<(System.Collections.Generic.IReadOnlyList<User> items, int total)> GetCustomersAsync(int page, int limit)
+    {
+        var query = _dbContext.Users.Where(u => u.Role == 1);
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(u => u.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync();
+            
+        return (items, total);
+    }
+
+    public async Task<User?> GetCustomerDetailsAsync(System.Guid userId)
+    {
+        return await _dbContext.Users
+            .Include(u => u.Orders)
+            .Include(u => u.Reviews)
+                .ThenInclude(r => r.Product)
+            .FirstOrDefaultAsync(u => u.UserId == userId && u.Role == 1);
+    }
 }

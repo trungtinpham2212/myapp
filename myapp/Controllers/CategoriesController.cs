@@ -5,7 +5,7 @@ using Services.Interface;
 
 namespace API.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/categories")]
 [ApiController]
 public class CategoriesController : ControllerBase
 {

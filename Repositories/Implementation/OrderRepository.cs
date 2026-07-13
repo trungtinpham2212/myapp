@@ -31,6 +31,12 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
         return (count, revenue);
     }
 
+    public async Task<int> CountIncompleteOrdersByUserIdAsync(System.Guid userId)
+    {
+        return await _dbContext.Orders
+            .CountAsync(o => o.UserId == userId && o.OrderStatus != "Completed" && o.OrderStatus != "Cancelled");
+    }
+
     public async Task<System.Collections.Generic.List<(System.DateTime? CreatedAt, decimal FinalAmount)>> GetSuccessfulOrdersRevenueAsync(System.DateTime startDate, System.DateTime endDate)
     {
         var query = _dbContext.Orders

@@ -29,6 +29,8 @@ public partial class User
 
     public DateTime? UpdatedAt { get; set; }
 
+    public bool IsActive { get; set; }
+
     public virtual Cart Cart { get; set; }
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();

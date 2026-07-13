@@ -48,7 +48,7 @@ public partial class myappContext : DbContext
 
 //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-//        => optionsBuilder.UseNpgsql("Host=localhost;Database=myapp;Username=postgres;Password=111111");
+//        => optionsBuilder.UseNpgsql("Password=111111;Username=postgres;Database=myapp;Host=localhost");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -513,6 +513,9 @@ public partial class myappContext : DbContext
                 .IsRequired()
                 .HasMaxLength(255)
                 .HasColumnName("full_name");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
             entity.Property(e => e.PasswordHash)
                 .IsRequired()
                 .HasMaxLength(255)
