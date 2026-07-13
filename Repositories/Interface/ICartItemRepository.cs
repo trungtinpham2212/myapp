@@ -8,4 +8,5 @@ public interface ICartItemRepository : IGenericRepository<CartItem>
 {
     Task<IReadOnlyList<CartItem>> GetCartItemsWithDetailsAsync(long cartId);
     Task<CartItem?> GetCartItemByCartAndVariantAsync(long cartId, long productVariantId);
+    Task<int> CountByVariantIdsAsync(List<long> variantIds);
 }

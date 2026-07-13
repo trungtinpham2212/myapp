@@ -327,18 +327,16 @@ public class ProductService : IProductService
             return new ApiResponse<bool> { Success = false, Message = "Không thể xóa hết tất cả biến thể của sản phẩm", Data = false };
         }
 
-        // Kiểm tra tất cả các variant cần xóa có nằm trong giỏ hàng không (chỉ 1 query DB)
-        var cartItemCount = await _unitOfWork.CartItemRepository.CountAsync(ci => variantIds.Contains(ci.ProductVariantId));
+        var cartItemCount = await _unitOfWork.CartItemRepository.CountByVariantIdsAsync(variantIds);
         if (cartItemCount > 0)
         {
-            return new ApiResponse<bool> { Success = false, Message = "Không thể xóa vì có ít nhất 1 biến thể đang nằm trong giỏ hàng", Data = false };
+            return new ApiResponse<bool> { Success = false, Message = "Không thể xóa biến thể đang có trong giỏ hàng", Data = false };
         }
 
-        // Kiểm tra tất cả các variant cần xóa có nằm trong đơn hàng không (chỉ 1 query DB)
-        var orderDetailCount = await _unitOfWork.OrderDetailRepository.CountAsync(od => variantIds.Contains(od.ProductVariantId));
+        var orderDetailCount = await _unitOfWork.OrderDetailRepository.CountIncompleteOrdersByVariantIdsAsync(variantIds);
         if (orderDetailCount > 0)
         {
-            return new ApiResponse<bool> { Success = false, Message = "Không thể xóa vì có ít nhất 1 biến thể đã có đơn hàng", Data = false };
+            return new ApiResponse<bool> { Success = false, Message = "Không thể xóa biến thể đã phát sinh đơn hàng", Data = false };
         }
 
         // Remove variants
@@ -465,15 +463,13 @@ public class ProductService : IProductService
             var variantIds = product.ProductVariants.Select(v => v.ProductVariantId).ToList();
             if (variantIds.Any())
             {
-                var cartItemCount = await _unitOfWork.CartItemRepository.CountAsync(ci => variantIds.Contains(ci.ProductVariantId));
+                var cartItemCount = await _unitOfWork.CartItemRepository.CountByVariantIdsAsync(variantIds);
                 if (cartItemCount > 0)
                 {
                     return new ApiResponse<bool> { Success = false, Message = "Không thể ngừng kinh doanh sản phẩm đang có trong giỏ hàng", Data = false };
                 }
 
-                var incompleteOrderCount = await _unitOfWork.OrderDetailRepository.CountAsync(od => 
-                    variantIds.Contains(od.ProductVariantId) && 
-                    (od.Order.OrderStatus == "Processing" || od.Order.OrderStatus == "Pending"));
+                var incompleteOrderCount = await _unitOfWork.OrderDetailRepository.CountIncompleteOrdersByVariantIdsAsync(variantIds);
                     
                 if (incompleteOrderCount > 0)
                 {

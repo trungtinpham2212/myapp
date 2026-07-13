@@ -103,4 +103,14 @@ public class ProductRepository : GenericRepository<Product>, IProductRepository
             .Where(p => productIds.Contains(p.ProductId))
             .ToListAsync();
     }
+
+    public async Task<int> CountByCategoryIdAsync(int categoryId)
+    {
+        return await _dbContext.Products.CountAsync(p => p.CategoryId == categoryId);
+    }
+
+    public async Task<int> CountByBrandIdAsync(int brandId)
+    {
+        return await _dbContext.Products.CountAsync(p => p.BrandId == brandId);
+    }
 }

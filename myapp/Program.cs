@@ -88,6 +88,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationPublisher, SignalRNotificationPublisher>();
+builder.Services.AddScoped<ICatalogService, CatalogService>();
 
 builder.Services.Configure<Services.BM.CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();

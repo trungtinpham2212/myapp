@@ -27,6 +27,12 @@ public class CartItemRepository : GenericRepository<CartItem>, ICartItemReposito
 
     public async Task<CartItem?> GetCartItemByCartAndVariantAsync(long cartId, long productVariantId)
     {
-        return await _dbContext.CartItems.FirstOrDefaultAsync(ci => ci.CartId == cartId && ci.ProductVariantId == productVariantId);
+        return await _dbContext.CartItems
+            .FirstOrDefaultAsync(c => c.CartId == cartId && c.ProductVariantId == productVariantId);
+    }
+
+    public async Task<int> CountByVariantIdsAsync(List<long> variantIds)
+    {
+        return await _dbContext.CartItems.CountAsync(ci => variantIds.Contains(ci.ProductVariantId));
     }
 }

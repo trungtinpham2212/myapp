@@ -83,6 +83,35 @@ public class InteractionService : IInteractionService
         };
     }
 
+    public async Task<ApiResponse<List<ReviewDto>>> GetAllReviewsFilteredAsync(long? productId, Guid? userId, int? star, int page = 1, int limit = 10)
+    {
+        var (items, total) = await _unitOfWork.ReviewRepository.GetFilteredReviewsAsync(productId, userId, star, page, limit);
+
+        var reviewDtos = items.Select(r => new ReviewDto
+        {
+            ReviewId = r.ReviewId,
+            RatingStars = r.RatingStars,
+            Comment = r.Comment,
+            UserName = r.User?.FullName,
+            CreatedAt = r.CreatedAt
+        }).ToList();
+
+        var totalPages = (int)Math.Ceiling(total / (double)limit);
+
+        return new ApiResponse<List<ReviewDto>>
+        {
+            Success = true,
+            Data = reviewDtos,
+            Pagination = new PaginationMeta
+            {
+                CurrentPage = page,
+                Limit = limit,
+                TotalItems = total,
+                TotalPages = totalPages
+            }
+        };
+    }
+
     public async Task<ToggleWishlistResponse> ToggleWishlistAsync(Guid userId, ToggleWishlistRequest request)
     {
         var wishlist = await _unitOfWork.WishlistRepository.GetUserWishlistForProductAsync(userId, request.ProductId);
