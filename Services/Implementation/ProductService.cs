@@ -450,4 +450,50 @@ public class ProductService : IProductService
 
         return new ApiResponse<bool> { Success = true, Message = "Xóa ảnh thành công", Data = true };
     }
+
+    public async Task<ApiResponse<bool>> ToggleProductStatusAsync(long productId)
+    {
+        var product = await _unitOfWork.ProductRepository.GetProductWithDetailsAsync(productId);
+        if (product == null)
+        {
+            return new ApiResponse<bool> { Success = false, Message = "Không tìm thấy sản phẩm", Data = false };
+        }
+
+        if (product.Status == "active")
+        {
+            // Đang active -> muốn deactivate
+            var variantIds = product.ProductVariants.Select(v => v.ProductVariantId).ToList();
+            if (variantIds.Any())
+            {
+                var cartItemCount = await _unitOfWork.CartItemRepository.CountAsync(ci => variantIds.Contains(ci.ProductVariantId));
+                if (cartItemCount > 0)
+                {
+                    return new ApiResponse<bool> { Success = false, Message = "Không thể ngừng kinh doanh sản phẩm đang có trong giỏ hàng", Data = false };
+                }
+
+                var incompleteOrderCount = await _unitOfWork.OrderDetailRepository.CountAsync(od => 
+                    variantIds.Contains(od.ProductVariantId) && 
+                    (od.Order.OrderStatus == "Processing" || od.Order.OrderStatus == "Pending"));
+                    
+                if (incompleteOrderCount > 0)
+                {
+                    return new ApiResponse<bool> { Success = false, Message = "Không thể ngừng kinh doanh sản phẩm vì đang có đơn hàng chưa hoàn thành", Data = false };
+                }
+            }
+
+            product.Status = "inactive";
+        }
+        else
+        {
+            // Đang inactive -> muốn active
+            product.Status = "active";
+        }
+
+        product.UpdatedAt = System.DateTime.UtcNow;
+        _unitOfWork.ProductRepository.Update(product);
+        await _unitOfWork.SaveChangesAsync();
+
+        string msg = product.Status == "active" ? "Đã mở bán lại sản phẩm" : "Đã ngừng kinh doanh sản phẩm";
+        return new ApiResponse<bool> { Success = true, Message = msg, Data = true };
+    }
 }

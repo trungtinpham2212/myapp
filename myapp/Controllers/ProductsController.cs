@@ -185,4 +185,16 @@ public class ProductsController : ControllerBase
         }
         return Ok(response);
     }
+
+    [Authorize(Roles = "2")]
+    [HttpPut("{product_id}/toggle-status")]
+    public async Task<IActionResult> ToggleProductStatus([FromRoute(Name = "product_id")] long productId)
+    {
+        var response = await _productService.ToggleProductStatusAsync(productId);
+        if (!response.Success)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
 }

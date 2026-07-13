@@ -31,6 +31,14 @@ public class DashboardController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("top-selling/export")]
+    public async Task<IActionResult> ExportTopSellingProducts([FromQuery] int top = 5, [FromQuery] System.DateTime? fromDate = null, [FromQuery] System.DateTime? toDate = null)
+    {
+        var excelBytes = await _dashboardService.ExportTopSellingProductsToExcelAsync(top, fromDate, toDate);
+        var fileName = $"TopSellingProducts_{System.DateTime.Now:yyyyMMddHHmmss}.xlsx";
+        return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     [HttpGet("revenue-last-7-days")]
     public async Task<IActionResult> GetRevenueLast7Days([FromQuery] System.DateTime? fromDate = null, [FromQuery] System.DateTime? toDate = null)
     {

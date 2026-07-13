@@ -15,4 +15,5 @@ public interface IProductService
     Task<ApiResponse<bool>> DeleteProductVariantsAsync(long productId, List<long> variantIds);
     Task<ApiResponse<List<ImageDto>>> AddProductImagesAsync(long productId, List<Microsoft.AspNetCore.Http.IFormFile> images);
     Task<ApiResponse<bool>> DeleteProductImagesAsync(long productId, List<long> imageIds);
+    Task<ApiResponse<bool>> ToggleProductStatusAsync(long productId);
 }
