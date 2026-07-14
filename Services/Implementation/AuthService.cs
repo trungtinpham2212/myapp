@@ -179,7 +179,7 @@ public class AuthService : IAuthService
             issuer: _config["Jwt:Issuer"] ?? "myapp",
             audience: _config["Jwt:Audience"] ?? "myapp_users",
             claims: claims,
-            expires: DateTime.Now.AddDays(7),
+            expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

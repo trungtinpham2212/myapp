@@ -90,6 +90,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationPublisher, SignalRNotificationPublisher>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 
 builder.Services.Configure<Services.BM.CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
@@ -112,5 +113,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<PaymentHub>("/paymentHub");
 app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

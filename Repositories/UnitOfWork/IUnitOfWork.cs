@@ -26,6 +26,8 @@ public interface IUnitOfWork : IDisposable
     IWishlistRepository WishlistRepository { get; }
     IPaymentRepository PaymentRepository { get; }
     INotificationRepository NotificationRepository { get; }
+    IChatRoomRepository ChatRoomRepository { get; }
+    IChatMessageRepository ChatMessageRepository { get; }
 
     Task<IDbContextTransaction> BeginTransactionAsync();
 

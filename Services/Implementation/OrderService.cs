@@ -256,4 +256,98 @@ public class OrderService : IOrderService
             Data = orderDto
         };
     }
+
+    public async Task<ApiResponse<string>> ProcessWebhookPaymentAsync(string orderCode, decimal transferAmount, string referenceCode)
+    {
+        string orderIdStr = orderCode.Substring(2); // Cắt chữ DH đi để lấy số
+        if (!long.TryParse(orderIdStr, out long orderId))
+        {
+            return new ApiResponse<string> { Success = false, Message = "Invalid order ID format" };
+        }
+
+        var order = await _unitOfWork.OrderRepository.GetByIdAsync(orderId);
+        if (order == null)
+        {
+            return new ApiResponse<string> { Success = false, Message = "Order not found" };
+        }
+
+        if (order.PaymentStatus == "Success")
+        {
+            return new ApiResponse<string> { Success = false, Message = "Order already paid" };
+        }
+
+        if (transferAmount < order.FinalAmount)
+        {
+            return new ApiResponse<string> { Success = false, Message = "Transfer amount is less than order amount" };
+        }
+
+        // Cập nhật trạng thái Order
+        order.PaymentStatus = "Success";
+        order.OrderStatus = "Success"; 
+        order.UpdatedAt = DateTime.UtcNow;
+        _unitOfWork.OrderRepository.Update(order);
+
+        // Cập nhật trạng thái Payment
+        var payments = await _unitOfWork.PaymentRepository.GetAllAsync();
+        var payment = payments.FirstOrDefault(p => p.OrderId == orderId && p.PaymentMethod == "BankTransfer");
+        
+        if (payment != null)
+        {
+            payment.PaymentStatus = "Success";
+            payment.TransactionReference = referenceCode;
+            payment.UpdatedAt = DateTime.UtcNow;
+            _unitOfWork.PaymentRepository.Update(payment);
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+
+        // Push Notification to Admin (Đơn hàng đã thanh toán)
+        await _notificationService.PushNotificationAsync(
+            userId: null,
+            title: "Đơn hàng đã thanh toán",
+            content: $"Đơn hàng #{order.OrderId} đã được thanh toán thành công qua chuyển khoản.",
+            type: "success",
+            targetType: "Order",
+            targetId: order.OrderId.ToString()
+        );
+
+        // Push Notification to User (nếu có UserId)
+        if (order.UserId != Guid.Empty)
+        {
+            await _notificationService.PushNotificationAsync(
+                userId: order.UserId,
+                title: "Thanh toán thành công",
+                content: $"Đơn hàng #{order.OrderId} của bạn đã được thanh toán thành công.",
+                type: "success",
+                targetType: "Order",
+                targetId: order.OrderId.ToString()
+            );
+        }
+
+        // Logic check Low Stock (sản phẩm sắp hết hàng)
+        var orderWithDetails = await _unitOfWork.OrderRepository.GetOrderWithDetailsAsync(order.OrderId);
+        if (orderWithDetails != null && orderWithDetails.OrderDetails != null)
+        {
+            foreach (var detail in orderWithDetails.OrderDetails)
+            {
+                var variant = await _unitOfWork.ProductVariantRepository.GetByIdAsync(detail.ProductVariantId);
+                if (variant != null && variant.StockQuantity < 5)
+                {
+                    var product = await _unitOfWork.ProductRepository.GetByIdAsync(variant.ProductId);
+                    string productName = product != null ? product.Name : $"Variant {variant.ProductVariantId}";
+                    
+                    await _notificationService.PushNotificationAsync(
+                        userId: null, // Admin only
+                        title: "Sản phẩm sắp hết hàng",
+                        content: $"{productName} ({variant.Color}, {variant.Storage}) (SL: {variant.StockQuantity})",
+                        type: "warning",
+                        targetType: "Product",
+                        targetId: variant.ProductId.ToString()
+                    );
+                }
+            }
+        }
+
+        return new ApiResponse<string> { Success = true, Message = "Thanh toán thành công", Data = orderId.ToString() };
+    }
 }

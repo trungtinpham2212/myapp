@@ -1,4 +1,5 @@
 using System;
+using API.Extensions;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -20,23 +21,17 @@ public class CartsController : ControllerBase
         _cartService = cartService;
     }
 
-    private Guid GetUserId()
-    {
-        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return claim != null ? Guid.Parse(claim) : Guid.Empty;
-    }
-
     [HttpGet]
     public async Task<IActionResult> GetCart()
     {
-        var response = await _cartService.GetCartAsync(GetUserId());
+        var response = await _cartService.GetCartAsync(User.GetUserId());
         return Ok(response);
     }
 
     [HttpPost("items")]
     public async Task<IActionResult> AddToCart([FromBody] AddToCartRequest request)
     {
-        var response = await _cartService.AddToCartAsync(GetUserId(), request);
+        var response = await _cartService.AddToCartAsync(User.GetUserId(), request);
         if (!response.Success)
         {
             return BadRequest(response);
@@ -47,7 +42,7 @@ public class CartsController : ControllerBase
     [HttpDelete("items/{cart_item_id}")]
     public async Task<IActionResult> RemoveFromCart([FromRoute(Name = "cart_item_id")] long cartItemId)
     {
-        var response = await _cartService.RemoveFromCartAsync(GetUserId(), cartItemId);
+        var response = await _cartService.RemoveFromCartAsync(User.GetUserId(), cartItemId);
         if (!response.Success)
         {
             return BadRequest(response);

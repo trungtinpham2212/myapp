@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.BM;
 using Services.Interface;
+using API.Extensions;
 
 namespace myapp.Controllers;
 
@@ -21,11 +22,6 @@ public class ProductsController : ControllerBase
         _interactionService = interactionService;
     }
 
-    private Guid GetUserId()
-    {
-        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return claim != null ? Guid.Parse(claim) : Guid.Empty;
-    }
 
     [HttpGet]
     public async Task<IActionResult> GetProducts(
@@ -68,7 +64,7 @@ public class ProductsController : ControllerBase
     [HttpPost("{product_id}/reviews")]
     public async Task<IActionResult> CreateReview([FromRoute(Name = "product_id")] long productId, [FromBody] CreateReviewRequest request)
     {
-        var response = await _interactionService.CreateReviewAsync(GetUserId(), productId, request);
+        var response = await _interactionService.CreateReviewAsync(User.GetUserId(), productId, request);
         if (!response.Success)
         {
             return BadRequest(response);

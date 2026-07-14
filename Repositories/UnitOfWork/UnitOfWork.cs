@@ -27,6 +27,8 @@ public class UnitOfWork : IUnitOfWork
     private IWishlistRepository _wishlistRepository;
     private IPaymentRepository _paymentRepository;
     private INotificationRepository _notificationRepository;
+    private IChatRoomRepository _chatRoomRepository;
+    private IChatMessageRepository _chatMessageRepository;
 
     public UnitOfWork(myappContext dbContext)
     {
@@ -62,6 +64,8 @@ public class UnitOfWork : IUnitOfWork
     public IWishlistRepository WishlistRepository => _wishlistRepository ??= new WishlistRepository(_dbContext);
     public IPaymentRepository PaymentRepository => _paymentRepository ??= new PaymentRepository(_dbContext);
     public INotificationRepository NotificationRepository => _notificationRepository ??= new NotificationRepository(_dbContext);
+    public IChatRoomRepository ChatRoomRepository => _chatRoomRepository ??= new ChatRoomRepository(_dbContext);
+    public IChatMessageRepository ChatMessageRepository => _chatMessageRepository ??= new ChatMessageRepository(_dbContext);
 
     public Task<IDbContextTransaction> BeginTransactionAsync()
     {

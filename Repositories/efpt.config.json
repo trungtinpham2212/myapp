@@ -31,6 +31,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.chat_messages",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.chat_rooms",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.notifications",
          "ObjectType": 0
       },

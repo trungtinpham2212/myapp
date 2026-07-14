@@ -1,4 +1,5 @@
 using System;
+using API.Extensions;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -20,16 +21,10 @@ public class OrdersController : ControllerBase
         _orderService = orderService;
     }
 
-    private Guid GetUserId()
-    {
-        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return claim != null ? Guid.Parse(claim) : Guid.Empty;
-    }
-
     [HttpPost]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
     {
-        var response = await _orderService.CreateOrderAsync(GetUserId(), request);
+        var response = await _orderService.CreateOrderAsync(User.GetUserId(), request);
         if (!response.Success)
         {
             return BadRequest(response);

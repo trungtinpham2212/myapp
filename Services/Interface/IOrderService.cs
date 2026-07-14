@@ -8,4 +8,5 @@ public interface IOrderService
 {
     Task<ApiResponse<CreateOrderResponseDto>> CreateOrderAsync(Guid userId, CreateOrderRequest request);
     Task<ApiResponse<OrderDto>> GetOrderDetailsAsync(long orderId);
+    Task<ApiResponse<string>> ProcessWebhookPaymentAsync(string orderCode, decimal transferAmount, string referenceCode);
 }

@@ -26,6 +26,10 @@ public partial class myappContext : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
+    public virtual DbSet<ChatMessage> ChatMessages { get; set; }
+
+    public virtual DbSet<ChatRoom> ChatRooms { get; set; }
+
     public virtual DbSet<Notification> Notifications { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
@@ -160,6 +164,59 @@ public partial class myappContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
+        });
+
+        modelBuilder.Entity<ChatMessage>(entity =>
+        {
+            entity.HasKey(e => e.ChatMessageId).HasName("chat_messages_pkey");
+
+            entity.ToTable("chat_messages");
+
+            entity.Property(e => e.ChatMessageId).HasColumnName("chat_message_id");
+            entity.Property(e => e.ChatRoomId).HasColumnName("chat_room_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.IsRead)
+                .HasDefaultValue(false)
+                .HasColumnName("is_read");
+            entity.Property(e => e.MessageText)
+                .IsRequired()
+                .HasColumnName("message_text");
+            entity.Property(e => e.SenderId).HasColumnName("sender_id");
+
+            entity.HasOne(d => d.ChatRoom).WithMany(p => p.ChatMessages)
+                .HasForeignKey(d => d.ChatRoomId)
+                .HasConstraintName("fk_messages_rooms");
+
+            entity.HasOne(d => d.Sender).WithMany(p => p.ChatMessages)
+                .HasForeignKey(d => d.SenderId)
+                .HasConstraintName("fk_messages_senders");
+        });
+
+        modelBuilder.Entity<ChatRoom>(entity =>
+        {
+            entity.HasKey(e => e.ChatRoomId).HasName("chat_rooms_pkey");
+
+            entity.ToTable("chat_rooms");
+
+            entity.HasIndex(e => e.UserId, "chat_rooms_user_id_key").IsUnique();
+
+            entity.Property(e => e.ChatRoomId).HasColumnName("chat_room_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.User).WithOne(p => p.ChatRoom)
+                .HasForeignKey<ChatRoom>(d => d.UserId)
+                .HasConstraintName("fk_chat_rooms_users");
         });
 
         modelBuilder.Entity<Notification>(entity =>

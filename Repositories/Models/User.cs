@@ -33,6 +33,10 @@ public partial class User
 
     public virtual Cart Cart { get; set; }
 
+    public virtual ICollection<ChatMessage> ChatMessages { get; set; } = new List<ChatMessage>();
+
+    public virtual ChatRoom ChatRoom { get; set; }
+
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

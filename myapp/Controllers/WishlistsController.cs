@@ -1,4 +1,5 @@
 using System;
+using API.Extensions;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -20,23 +21,17 @@ public class WishlistsController : ControllerBase
         _interactionService = interactionService;
     }
 
-    private Guid GetUserId()
-    {
-        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return claim != null ? Guid.Parse(claim) : Guid.Empty;
-    }
-
     [HttpPost("toggle")]
     public async Task<IActionResult> ToggleWishlist([FromBody] ToggleWishlistRequest request)
     {
-        var response = await _interactionService.ToggleWishlistAsync(GetUserId(), request);
+        var response = await _interactionService.ToggleWishlistAsync(User.GetUserId(), request);
         return Ok(response);
     }
 
     [HttpGet]
     public async Task<IActionResult> GetWishlist()
     {
-        var response = await _interactionService.GetWishlistAsync(GetUserId());
+        var response = await _interactionService.GetWishlistAsync(User.GetUserId());
         return Ok(response);
     }
 }
